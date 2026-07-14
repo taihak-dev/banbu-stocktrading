@@ -1,8 +1,12 @@
 # 환경 변수 (API 키, 시크릿)
 .env
+.env_dev
 .env.lecture
 deploy.sh
 status.sh
+
+# DB 백업 (실제 KIS 토큰 + 개인 거래데이터 - 절대 commit 금지)
+db_backup/
 
 # Kaggle 인증 + push 시 secrets 자동 주입되는 노트북 (절대 commit 금지)
 .kaggle/
@@ -41,3 +45,4 @@ predict_colab.py
 
 # Claude Code
 .claude/
+memory/
