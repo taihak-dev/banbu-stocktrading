@@ -29,9 +29,11 @@ def current_account_type() -> str:
     return "mock" if settings.KIS_USE_MOCK else "real"
 
 
-def get_access_token():
+def get_access_token(force_refresh=False):
     """한국투자증권 API 접근 토큰 발급 또는 캐시된 토큰 반환.
-    KIS_USE_MOCK 에 따라 mock/real 토큰을 분리해서 캐시/저장."""
+    KIS_USE_MOCK 에 따라 mock/real 토큰을 분리해서 캐시/저장.
+    force_refresh=True 이면 로컬 캐시/DB 의 만료시각을 무시하고 KIS 에서 강제 재발급한다.
+    (KIS 가 명목 만료 전에 토큰을 무효화(EGW00123)한 경우 자가복구용)"""
     global _token_cache, _last_refresh_time
 
     token_type = _current_token_type()
@@ -39,7 +41,7 @@ def get_access_token():
     now = datetime.now(pytz.UTC)
 
     # 메모리 캐시 (해당 모드 슬롯) 가 유효하면 사용
-    if cache["access_token"] and cache["expires_at"] and now < cache["expires_at"]:
+    if not force_refresh and cache["access_token"] and cache["expires_at"] and now < cache["expires_at"]:
         print(f"메모리 캐시 토큰 사용 ({token_type})")
         return cache["access_token"]
 
@@ -53,7 +55,7 @@ def get_access_token():
 
     with _refresh_lock:
         # 락 획득 후 다시 캐시 확인
-        if cache["access_token"] and cache["expires_at"] and now < cache["expires_at"]:
+        if not force_refresh and cache["access_token"] and cache["expires_at"] and now < cache["expires_at"]:
             print(f"락 내에서 캐시 토큰 사용 ({token_type})")
             return cache["access_token"]
 
@@ -69,7 +71,7 @@ def get_access_token():
                 token_data = response.data[0]
                 expiration_time = parse_expiration_date(token_data["expires_at"])
 
-                if now < expiration_time:
+                if not force_refresh and now < expiration_time:
                     print(f"DB 기존 토큰 사용 ({token_type}) - 만료까지: {(expiration_time - now)}")
                     cache["access_token"] = token_data["access_token"]
                     cache["expires_at"] = expiration_time
@@ -89,7 +91,7 @@ def get_access_token():
 
         except Exception as e:
             print(f"토큰 조회 오류 ({token_type}): {str(e)}")
-            if cache["access_token"]:
+            if not force_refresh and cache["access_token"]:
                 print(f"DB 조회 오류 - 메모리 캐시 토큰 사용 ({token_type})")
                 return cache["access_token"]
             raise Exception(f"토큰 발급 실패 ({token_type}): {str(e)}")
@@ -187,7 +189,9 @@ def get_domestic_balance():
                 if "초당" in msg1:
                     time.sleep(2)
                 else:
-                    access_token = get_access_token()
+                    # EGW00123(만료 토큰) 등 인증 오류는 캐시 무시하고 강제 재발급
+                    force = result.get('msg_cd') == 'EGW00123' or '만료' in msg1
+                    access_token = get_access_token(force_refresh=force)
                     headers["authorization"] = f"Bearer {access_token}"
                     time.sleep(1)
                 continue
@@ -244,7 +248,9 @@ def get_overseas_balance(ovrs_excg_cd="NASD"):
                 if "초당" in msg1:
                     time.sleep(2)
                 else:
-                    access_token = get_access_token()
+                    # EGW00123(만료 토큰) 등 인증 오류는 캐시 무시하고 강제 재발급
+                    force = result.get('msg_cd') == 'EGW00123' or '만료' in msg1
+                    access_token = get_access_token(force_refresh=force)
                     headers["authorization"] = f"Bearer {access_token}"
                     time.sleep(1)
                 continue

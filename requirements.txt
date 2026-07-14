@@ -10,6 +10,7 @@ python-dotenv>=1.0.0
 pytz>=2023.3
 schedule>=1.2.0
 yfinance>=0.2.0
+websockets>=13  # yfinance 실시간 스트리밍(websockets.asyncio) 의존성. 13 미만이면 import 실패
 # TensorFlow (환경별 설치 필요 - README.md 참고)
 # Mac Apple Silicon: pip install tensorflow-macos tensorflow-metal
 # Windows / Linux:   pip install tensorflow
