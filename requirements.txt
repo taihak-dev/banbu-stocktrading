@@ -20,4 +20,5 @@ scikit-learn>=1.3.0
 matplotlib>=3.7.0
 joblib>=1.3.0
 anthropic>=0.30.0
+httpx>=0.25  # anthropic SDK가 socket_options 사용 → httpx 0.25+ 필요 (0.24.x는 TypeError)
 kaggle>=1.6.0
