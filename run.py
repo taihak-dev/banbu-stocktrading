@@ -1,4 +1,12 @@
+import sys
 import uvicorn
+
+# Windows 콘솔(cp949)에서 로그의 유니코드 문자(—, →, ⚠️ 등) 인코딩 오류 방지 → UTF-8 강제
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     # 로컬 개발용: 127.0.0.1(루프백)만 바인딩해 외부 인터넷 노출 차단.
