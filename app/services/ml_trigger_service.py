@@ -239,12 +239,16 @@ def push_kernel() -> Tuple[bool, str]:
         return False, msg
 
     rc, out, err = _run_kaggle_cmd(["kernels", "push", "-p", str(nb_dir)], timeout=120)
-    if rc != 0:
-        msg = f"Kaggle push 실패 (rc={rc}): {err.strip() or out.strip()}"
+    out_msg = (out or "").strip()
+    err_msg = (err or "").strip()
+
+    # kaggle CLI 는 "Kernel push error: ..." 같은 실패에도 rc=0 을 반환한다.
+    # 따라서 rc 뿐 아니라 성공 문구("successfully pushed")까지 확인해야 오판을 막는다.
+    if rc != 0 or "successfully pushed" not in out_msg.lower():
+        msg = f"Kaggle push 실패 (rc={rc}): {err_msg or out_msg or '알 수 없는 오류'}"
         logger.error(msg)
         return False, msg
 
-    out_msg = out.strip()
     logger.info(f"Kaggle 노트북 push 성공: {out_msg}")
     return True, out_msg
 
