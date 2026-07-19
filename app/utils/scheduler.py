@@ -1113,7 +1113,8 @@ def start_daily_pipeline_scheduler():
     for job in [j for j in schedule.jobs if j.job_func.__name__ == '_run_daily_pipeline']:
         schedule.cancel_job(job)
 
-    schedule.every().day.at("21:00").do(_run_daily_pipeline)
+    # tz 명시("Asia/Seoul") → 시스템 로컬 tz 와 무관하게 항상 한국시간 21:00 에 실행
+    schedule.every().day.at("21:00", "Asia/Seoul").do(_run_daily_pipeline)
     daily_pipeline_scheduler_running = True
     pipeline_logger.info("일일 파이프라인 스케줄러 시작 (매일 KST 21:00)")
     return True
