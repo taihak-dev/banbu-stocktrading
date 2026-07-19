@@ -117,6 +117,11 @@ def _run_kaggle_cmd(args: list, timeout: int = 60) -> Tuple[int, str, str]:
             [_kaggle_bin()] + args,
             capture_output=True,
             text=True,
+            # kaggle CLI 는 UTF-8 로 출력(env 로 강제)하는데, Windows 기본 cp949 로
+            # 디코딩하면 출력의 유니코드 문자(—, ✓ 등)에서 UnicodeDecodeError 발생.
+            # → UTF-8 로 명시 디코딩 (혹시 모를 잔여 바이트는 replace 로 무시).
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             env=_kaggle_env(),
         )
