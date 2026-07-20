@@ -175,12 +175,14 @@ def notify_llm_decisions(
         return
 
     # 매수 종목 라인
+    # 주의: dict.get(k, 0) 는 키가 있고 값이 None 이면 None 을 반환 → :.3f 포맷 TypeError.
+    #       (k or 0) 로 None 을 0 으로 강제해 크래시 방지.
     buy_lines = []
     for c in buy_candidates:
         buy_lines.append(
             f"• *{c.get('stock_name')}* ({c.get('ticker')}) "
-            f"score={c.get('composite_score', 0):.3f} "
-            f"rise={c.get('rise_probability', 0):.2f}% "
+            f"score={(c.get('composite_score') or 0):.3f} "
+            f"rise={(c.get('rise_probability') or 0):.2f}% "
             f"— _{c.get('llm_reason', '')}_"
         )
 
@@ -189,7 +191,7 @@ def notify_llm_decisions(
     for c in held_candidates:
         hold_lines.append(
             f"• {c.get('stock_name')} ({c.get('ticker')}) "
-            f"score={c.get('composite_score', 0):.3f} "
+            f"score={(c.get('composite_score') or 0):.3f} "
             f"— _{c.get('llm_reason', '')}_"
         )
 
@@ -225,7 +227,7 @@ def notify_buy_ordered(
         message=(
             f"*수량:* {qty}주  *주문가(지정가):* ${price:.2f}  "
             f"*예상총액:* ${qty * price:,.2f}\n"
-            f"*composite_score:* {composite_score:.4f}\n"
+            f"*composite_score:* {(composite_score or 0):.4f}\n"
             f"_⏳ 거래소 체결은 정규 시간(NY 09:30~16:00) 매칭 후 별도 '체결' 알림 발송_"
         ),
         color="#3b82f6",  # 파란색 (정보성)
